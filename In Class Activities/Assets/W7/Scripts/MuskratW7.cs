@@ -17,18 +17,18 @@ public class MuskratW7 : MonoBehaviour
     {
         if (_orbitMode)
         {
-            MoveOrbitMode();
+            MoveOrbitMode(Input.GetAxis("Horizontal"), Input.GetAxis("Vertical"));
         }
         else
         {
-            MoveNormal();
+            MoveNormal(Input.GetAxis("Horizontal"), Input.GetAxis("Vertical"));
         }
 
-        Jump();
+        Jump(Input.GetKeyDown(KeyCode.Space));
     }
 
     // ------------------------------------------------------------------------
-    private void MoveOrbitMode()
+    private void MoveOrbitMode(float leftright, float forward)
     {
         // STEP 3 -------------------------------------------------------------
         // This movement code only runs when the Muskrat is on a bubble.
@@ -45,13 +45,14 @@ public class MuskratW7 : MonoBehaviour
         //
         // You might want to look below Step 3 for an example :D
         
-        float leftright = Input.GetAxis("Horizontal");
+        Vector3 upAxis = transform.TransformDirection(Vector3.up);
+        transform.RotateAround(_sphereTransform.position, upAxis,
+            leftright * _rotationSpeed * Time.deltaTime);
         
 
 
         // STEP 3 -------------------------------------------------------------
 
-        float forward = Input.GetAxis("Vertical");
         Vector3 axis = transform.TransformDirection(Vector3.right);
         transform.RotateAround(
             _sphereTransform.position,
@@ -66,12 +67,13 @@ public class MuskratW7 : MonoBehaviour
         // The Muskrat should never play the "flying" animation while on a
         //      bubble.
 
-
+        _animator.SetBool("flying", false);
+        _animator.SetBool("running", Mathf.Abs(forward) > 0.01f);
         // STEP 5 -------------------------------------------------------------
     }
 
     // ------------------------------------------------------------------------
-    private void MoveNormal()
+    private void MoveNormal(float leftright, float movement)
     {
         // STEP 1 -------------------------------------------------------------
         // This movement code only runs when the Muskrat is on flat ground.
@@ -85,18 +87,17 @@ public class MuskratW7 : MonoBehaviour
         //      https://docs.unity3d.com/6000.0/Documentation/ScriptReference/Vector3.html
         //      like up, left, right, or forward.
 
-        float leftright = Input.GetAxis("Horizontal");
+        transform.Rotate(Vector3.up * leftright * _rotationSpeed * Time.deltaTime);
 
         // STEP 1 -------------------------------------------------------------
 
 
         // STEP 2 -------------------------------------------------------------
-        float movement = Input.GetAxis("Vertical");
 
         // This line of code is incorrect. 
         // Replace it with a different line of code that uses 'movement' to
         //      move the Muskrat forwards and backwards.
-        transform.position += movement * Vector3.forward * _moveSpeed * Time.deltaTime;
+        transform.Translate(Vector3.forward * movement * _moveSpeed * Time.deltaTime, Space.Self);
 
         // STEP 2 -------------------------------------------------------------
 
@@ -108,20 +109,24 @@ public class MuskratW7 : MonoBehaviour
         // You may also find the absolute value method, Mathf.Abs(), helpful:
         //      https://docs.unity3d.com/6000.0/Documentation/ScriptReference/Mathf.Abs.html
 
-        
+        bool flying = Mathf.Abs(_rigidbody.linearVelocity.y) > 0.1f;
+        _animator.SetBool("flying", flying);
+        _animator.SetBool("running", !flying && Mathf.Abs(movement) > 0.01f);
         // STEP 4 -------------------------------------------------------------
     }
 
     // ------------------------------------------------------------------------
-    private void Jump()
+    private void Jump(bool jumpPressed)
     {
-        if (Input.GetKeyDown(KeyCode.Space))
+        if (jumpPressed)
         {
             _rigidbody.isKinematic = false;
             _rigidbody.AddForce(Vector3.up * _jumpForce, ForceMode.Impulse);
 
             if (_sphereTransform != null)
             {
+                // Disable collisions now; Destroy is deferred until the end of the frame.
+                _sphereTransform.gameObject.SetActive(false);
                 Destroy(_sphereTransform.gameObject);
                 _sphereTransform = null;
             }
@@ -133,7 +138,7 @@ public class MuskratW7 : MonoBehaviour
     // ------------------------------------------------------------------------
     private void OnCollisionEnter(Collision collision)
     {
-        if (collision.gameObject.tag.Equals("Ball"))
+        if (collision.gameObject.activeInHierarchy && collision.gameObject.CompareTag("Ball"))
         {
             _orbitMode = true;
             _rigidbody.isKinematic = true;

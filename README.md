@@ -46,6 +46,17 @@ I kept the W6 scene for this week's work, as the instructions explain. The chase
 
 I checked all ten bats in Play mode. Nearby bats moved toward the cat, distant bats stayed still, and the bats stopped after leaving the chase range. I also checked two bats touching the cat at the same time. Both showed messages, waited for their own cooldown, and then showed another message from the array.
 
+### W8 - In-Class Activity (W7 scene)
+
+#### Coordinate spaces
+
+![Two illustrations comparing the Muskrat's local up on flat ground and on the side of a bubble](Docs/W8/coordinate-spaces.png)
+
+#### What was wrong with Step 2?
+
+In Step 2, the Muskrat kept moving along the world's Z axis, even after it turned. The code used `Vector3.forward` in world space, so moving forward did not follow where it was facing. I changed it to `transform.Translate` with `Space.Self`. Now W and S move it forward and backward based on its own direction.
+
+
 ## Open-Source Assets
 ### W1
 - Animals: https://assetstore.unity.com/packages/3d/characters/animals/animals-free-animated-low-poly-3d-models-260727 
